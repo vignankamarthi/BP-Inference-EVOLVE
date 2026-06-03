@@ -92,3 +92,47 @@ def test_diversify_population_empty_seeds():
     distributed = seeds.diversify_population([], island_count=3)
     assert len(distributed) == 3
     assert all(len(i) == 0 for i in distributed)
+
+
+# ---------- expand_regimes (Track A free / Track B per-subject) ----------
+
+def test_expand_regimes_doubles_the_population():
+    out = seeds.expand_regimes(seeds.default_seed_specs())
+    assert len(out) == 8                                  # 4 seeds x 2 regimes
+
+
+def test_expand_regimes_each_seed_gets_free_and_cal_variant():
+    out = seeds.expand_regimes(seeds.default_seed_specs())
+    names = {s["name"] for s in out}
+    for base in ("seed_minirocket", "seed_runet_attn",
+                 "seed_resunet_sa", "seed_mamba_ssm"):
+        assert f"{base}_free" in names
+        assert f"{base}_cal" in names
+
+
+def test_expand_regimes_sets_calibration_genes():
+    out = {s["name"]: s for s in seeds.expand_regimes(seeds.default_seed_specs())}
+    assert out["seed_minirocket_free"]["calibration"] == {"mode": "free"}
+    cal = out["seed_minirocket_cal"]["calibration"]
+    assert cal["mode"] == "per_subject"
+    assert cal["cal_fraction"] == 0.2                     # default, evolvable gene
+
+
+def test_expand_regimes_custom_cal_fraction():
+    out = {s["name"]: s for s in
+           seeds.expand_regimes(seeds.default_seed_specs(), cal_fraction=0.1)}
+    assert out["seed_runet_attn_cal"]["calibration"]["cal_fraction"] == 0.1
+
+
+def test_expand_regimes_preserves_family_and_ppg_only():
+    out = seeds.expand_regimes(seeds.default_seed_specs())
+    for s in out:
+        assert s["data"]["signals"] == ["ppg"]
+        assert s["model"]["family"] in {"ridge_regressor_cv", "runet_attn",
+                                        "resunet_sa", "mamba_ssm"}
+
+
+def test_expand_regimes_does_not_mutate_inputs():
+    base = seeds.default_seed_specs()
+    seeds.expand_regimes(base)
+    assert all(s["calibration"] == {"mode": "free"} for s in base)  # untouched

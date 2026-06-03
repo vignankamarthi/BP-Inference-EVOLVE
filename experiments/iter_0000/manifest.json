@@ -1,0 +1,61 @@
+{
+  "iteration": 0,
+  "experiments": [
+    {
+      "run_id": "seed_minirocket_free",
+      "run_dir": "experiments/iter_0000/seed_minirocket_free",
+      "family": "ridge_regressor_cv",
+      "regime": "free",
+      "name": "seed_minirocket_free"
+    },
+    {
+      "run_id": "seed_runet_attn_free",
+      "run_dir": "experiments/iter_0000/seed_runet_attn_free",
+      "family": "runet_attn",
+      "regime": "free",
+      "name": "seed_runet_attn_free"
+    },
+    {
+      "run_id": "seed_resunet_sa_free",
+      "run_dir": "experiments/iter_0000/seed_resunet_sa_free",
+      "family": "resunet_sa",
+      "regime": "free",
+      "name": "seed_resunet_sa_free"
+    },
+    {
+      "run_id": "seed_mamba_ssm_free",
+      "run_dir": "experiments/iter_0000/seed_mamba_ssm_free",
+      "family": "mamba_ssm",
+      "regime": "free",
+      "name": "seed_mamba_ssm_free"
+    },
+    {
+      "run_id": "seed_minirocket_cal",
+      "run_dir": "experiments/iter_0000/seed_minirocket_cal",
+      "family": "ridge_regressor_cv",
+      "regime": "per_subject",
+      "name": "seed_minirocket_cal"
+    },
+    {
+      "run_id": "seed_runet_attn_cal",
+      "run_dir": "experiments/iter_0000/seed_runet_attn_cal",
+      "family": "runet_attn",
+      "regime": "per_subject",
+      "name": "seed_runet_attn_cal"
+    },
+    {
+      "run_id": "seed_resunet_sa_cal",
+      "run_dir": "experiments/iter_0000/seed_resunet_sa_cal",
+      "family": "resunet_sa",
+      "regime": "per_subject",
+      "name": "seed_resunet_sa_cal"
+    },
+    {
+      "run_id": "seed_mamba_ssm_cal",
+      "run_dir": "experiments/iter_0000/seed_mamba_ssm_cal",
+      "family": "mamba_ssm",
+      "regime": "per_subject",
+      "name": "seed_mamba_ssm_cal"
+    }
+  ]
+}

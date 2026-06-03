@@ -1,0 +1,37 @@
+{
+  "calibration": {
+    "cal_fraction": 0.2,
+    "mode": "per_subject"
+  },
+  "data": {
+    "signals": [
+      "ppg"
+    ],
+    "val_fraction": 0.2
+  },
+  "decode": {
+    "strategy": "identity"
+  },
+  "feature_extraction": null,
+  "model": {
+    "base_channels": 32,
+    "dropout": 0.2,
+    "family": "runet_attn",
+    "hop": 16,
+    "n_fft": 64,
+    "num_heads": 4,
+    "use_stft": true
+  },
+  "name": "seed_runet_attn_cal",
+  "preprocessing": {
+    "normalize": "per_channel_zscore"
+  },
+  "training": {
+    "batch_size": 64,
+    "epochs": 40,
+    "loss": "smooth_l1",
+    "lr": 0.0005,
+    "optimizer": "adamw",
+    "seed": 42
+  }
+}

@@ -98,6 +98,34 @@ def default_seed_specs() -> list[dict]:
     ]
 
 
+def expand_regimes(seed_specs: list[dict], cal_fraction: float = 0.2) -> list[dict]:
+    """Expand each seed into its Track A and Track B calibration variant.
+
+    Track A (calibration-free, the hero frontier): calibration={'mode':'free'},
+    name '<seed>_free'. Track B (calibration-based): calibration=
+    {'mode':'per_subject','cal_fraction':cal_fraction}, name '<seed>_cal'.
+    `cal_fraction` is the evolvable Track-B gene (default 0.2; see the gene
+    schema docstring above). Inputs are not mutated (deep-copied).
+
+    Returns 2*len(seed_specs) specs, all Track A first then all Track B, so a
+    `--array=0-(2n-1)` maps the first half to Track A and the second to Track B.
+    """
+    import copy
+
+    free, cal = [], []
+    for spec in seed_specs:
+        base = spec.get("name", "seed")
+        a = copy.deepcopy(spec)
+        a["name"] = f"{base}_free"
+        a["calibration"] = {"mode": "free"}
+        free.append(a)
+        b = copy.deepcopy(spec)
+        b["name"] = f"{base}_cal"
+        b["calibration"] = {"mode": "per_subject", "cal_fraction": cal_fraction}
+        cal.append(b)
+    return free + cal
+
+
 def diversify_population(seed_specs: list[dict],
                           island_count: int) -> list[list[dict]]:
     """Distribute the seeds across `island_count` islands.
