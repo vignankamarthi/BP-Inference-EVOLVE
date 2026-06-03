@@ -1,0 +1,20 @@
+# BP-Inference-EVOLVE runtime dependencies.
+#
+# torch is INTENTIONALLY NOT pinned here. Install per platform:
+#   Mac (local dev / tests):   pip install torch
+#   Explorer (H200, CUDA 12):  pip install torch==2.5.1 --index-url https://download.pytorch.org/whl/cu121
+#
+# No external LLM SDK (ANTIPATTERNS rule 13): the mutation operator is the
+# Claude Code session, not an `anthropic`/`openai` client.
+
+numpy>=1.26,<2.0
+scipy>=1.12
+pandas>=2.1
+pyarrow>=15.0
+h5py>=3.10          # PulseDB .mat (v7.3 / HDF5) segment reads
+scikit-learn>=1.4   # RidgeCV regressor, metrics, scalers
+tqdm>=4.66
+
+# Testing (TDD hard rule)
+pytest>=7.4
+pytest-cov>=4.1

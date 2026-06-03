@@ -1,0 +1,54 @@
+# Data (963 GB PulseDB, cluster-only, never tracked)
+data/
+*.mat
+*.h5
+*.hdf5
+*.npz
+*.parquet
+
+# Large model artifacts / checkpoints
+*.pt
+*.pth
+*.ckpt
+checkpoints/
+**/checkpoints/
+
+# Ledger: Mac-local persistent loop state, not a git artifact
+*.db
+*.sqlite
+*.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+.venv/
+venv/
+.env
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Markdown is never committed (AGENTIC_WORKFLOW + ANTIPATTERNS rule 9).
+# This also keeps the hidden-loop narrative (CLAUDE/MEMORY/PLAN/ANTIPATTERNS) off
+# GitHub. README.md is the sole exception: it is the public face of the repo,
+# mirroring the AI4Pain-2026 sibling (only README.md among markdown is public).
+*.md
+!README.md
+
+# SLURM logs
+logs/
+*.out
+slurm-*.out
+
+# Git is the Mac<->cluster bridge: experiment specs/results MUST stay tracked.
+!experiments/
+!experiments/**/spec.json
+!experiments/**/run.py
+!experiments/**/result.json
+!experiments/**/manifest.json

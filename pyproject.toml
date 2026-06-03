@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bp-inference-evolve"
+version = "0.1.0"
+description = "PPG-only cuffless blood-pressure compliance via an evolutionary discovery loop"
+requires-python = ">=3.11"
+
+[tool.setuptools]
+packages = ["framework", "bp_inference"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-q --strict-markers"
+markers = [
+    "slow: tests that train a small model (deselect with -m 'not slow')",
+]
