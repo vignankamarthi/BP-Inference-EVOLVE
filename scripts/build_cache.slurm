@@ -1,9 +1,9 @@
 #!/usr/bin/bash
 #SBATCH --job-name=bp_build_cache
 #SBATCH --partition=short
-#SBATCH --time=12:00:00
+#SBATCH --time=04:00:00
 #SBATCH --cpus-per-task=8
-#SBATCH --mem=192G
+#SBATCH --mem=128G
 #SBATCH --output=logs/%x_%j.log
 #SBATCH --error=logs/%x_%j.err
 #SBATCH --mail-type=END,FAIL

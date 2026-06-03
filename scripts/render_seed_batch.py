@@ -68,23 +68,42 @@ def main():
 
     manifest = {"iteration": args.iter, "experiments": experiments}
 
-    # Sanity gate: the seed batch must span all 4 families (min_families=4),
-    # none exceeding max_per_family (each family appears 2x here).
+    # Sanity gate on the COMBINED batch: it must span all 4 families
+    # (min_families=4), none exceeding max_per_family. Checked before the split.
     violation = validate_batch_family_quota(manifest, max_per_family=3,
                                             min_families=4)
     if violation is not None:
         print(f"FATAL: family-quota violation: {violation.detail}", file=sys.stderr)
         sys.exit(1)
 
+    # Split by compute: CPU-only families (MiniRocket) must NOT go to a GPU node
+    # (idles the GPU -> RC cancels). Each sub-manifest is self-contained and
+    # 0-indexed so `--array=0-(k-1)` maps SLURM_ARRAY_TASK_ID -> experiments[i].
+    cpu_exps = [e for e in experiments
+                if render.FAMILY_COMPUTE.get(e["family"]) == "cpu"]
+    gpu_exps = [e for e in experiments
+                if render.FAMILY_COMPUTE.get(e["family"]) == "gpu"]
+
     iter_dir.mkdir(parents=True, exist_ok=True)
     (iter_dir / "manifest.json").write_text(json.dumps(manifest, indent=2))
+    (iter_dir / "manifest_cpu.json").write_text(json.dumps(
+        {"iteration": args.iter, "compute": "cpu", "experiments": cpu_exps}, indent=2))
+    (iter_dir / "manifest_gpu.json").write_text(json.dumps(
+        {"iteration": args.iter, "compute": "gpu", "experiments": gpu_exps}, indent=2))
 
-    n = len(experiments)
-    print(f"\nmanifest: {iter_dir / 'manifest.json'} ({n} experiments)")
-    print("cluster (after push + cache build):")
-    print(f"  sbatch --array=0-{n - 1}%4 "
-          f"--export=ALL,MANIFEST={(iter_dir / 'manifest.json').relative_to(_ROOT)} "
-          f"scripts/run_array.slurm")
+    rel = lambda p: p.relative_to(_ROOT)
+    print(f"\n{len(experiments)} experiments -> {iter_dir/'manifest.json'}")
+    print("cluster (after push + cache build) -- submit BOTH:")
+    if cpu_exps:
+        print(f"  # CPU ({len(cpu_exps)}): MiniRocket on `short`, no GPU")
+        print(f"  sbatch --array=0-{len(cpu_exps)-1} "
+              f"--export=ALL,MANIFEST={rel(iter_dir/'manifest_cpu.json')} "
+              f"scripts/run_array_cpu.slurm")
+    if gpu_exps:
+        print(f"  # GPU ({len(gpu_exps)}): neural seeds on `gpu`, H200")
+        print(f"  sbatch --array=0-{len(gpu_exps)-1}%4 "
+              f"--export=ALL,MANIFEST={rel(iter_dir/'manifest_gpu.json')} "
+              f"scripts/run_array.slurm")
 
 
 if __name__ == "__main__":

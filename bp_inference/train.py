@@ -133,6 +133,25 @@ def _load_train_val(data_root: Path, spec: dict):
     return (X[tr], y[tr], subjects[tr]), (X[va], y[va], subjects[va])
 
 
+def _batched_predict(model, X, bs: int):
+    """Forward `X` through `model` in batches of `bs`, return (N, n_targets) numpy.
+
+    A single forward on a whole split (100k+ segments) OOMs memory-heavy models
+    (the U-Net seeds build multi-resolution feature maps + attention). Batching
+    the eval forward, like training already is, keeps activation memory bounded.
+    """
+    import numpy as _np
+    import torch
+    model.eval()
+    outs = []
+    with torch.no_grad():
+        for i in range(0, len(X), max(1, bs)):
+            outs.append(model(X[i:i + bs]).detach().cpu().numpy())
+    if not outs:
+        return _np.zeros((0, 0), dtype=_np.float64)
+    return _np.concatenate(outs, axis=0)
+
+
 def run_regression_model(model_factory, spec: dict, data_root: Path,
                          out_dir: Path, name_tag: str = "torch") -> dict:
     """Train one neural seed end-to-end and write result.json."""
@@ -170,10 +189,8 @@ def run_regression_model(model_factory, spec: dict, data_root: Path,
     loader = DataLoader(TensorDataset(Xtr_t, ytr_t), batch_size=bs, shuffle=True)
 
     def predict(Xb):
-        model.eval()
-        with torch.no_grad():
-            out = model(Xb).cpu().numpy()
-        return out * t_std + t_mean          # de-standardize to mmHg
+        # Batched forward (bug-fix): never push a full split through at once.
+        return _batched_predict(model, Xb, bs) * t_std + t_mean   # -> mmHg
 
     history, best_metrics, final_metrics = [], {}, {}
     best_margin = -np.inf

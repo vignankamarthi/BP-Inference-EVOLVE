@@ -40,6 +40,10 @@ venv/
 # mirroring the AI4Pain-2026 sibling (only README.md among markdown is public).
 *.md
 !README.md
+# COMMITS.md is an untracked scratch runbook at the root (not gitignored, so it
+# shows in `git status`). It is never committed (commit plans use explicit adds);
+# Vignan deletes it when done and Claude recreates it from scratch each time.
+!COMMITS.md
 
 # SLURM logs
 logs/
@@ -52,3 +56,6 @@ slurm-*.out
 !experiments/**/run.py
 !experiments/**/result.json
 !experiments/**/manifest.json
+!experiments/**/manifest_cpu.json
+!experiments/**/manifest_gpu.json
+!experiments/**/run.log

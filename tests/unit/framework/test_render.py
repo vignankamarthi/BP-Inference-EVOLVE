@@ -27,6 +27,26 @@ def test_render_run_py_dispatches_to_correct_entry_point(tmp_path: Path, sample_
     assert "run_from_dir(args.run_dir, args.data_root)" in text
 
 
+def test_family_compute_covers_every_entry_point():
+    """Every runnable family must declare cpu/gpu so the batch can be split."""
+    assert set(render.FAMILY_COMPUTE) == set(render.FAMILY_ENTRY_POINTS)
+    assert set(render.FAMILY_COMPUTE.values()) <= {"cpu", "gpu"}
+    assert render.FAMILY_COMPUTE["ridge_regressor_cv"] == "cpu"   # MiniRocket
+    for fam in ("runet_attn", "resunet_sa", "mamba_ssm"):
+        assert render.FAMILY_COMPUTE[fam] == "gpu"
+
+
+def test_rendered_run_py_is_valid_python_with_failure_capture(tmp_path, sample_program_spec):
+    """run.py must parse AND wrap the entry call so a crash writes result.json."""
+    import ast
+    out = render.render_spec_to_code(sample_program_spec, tmp_path)
+    text = out.read_text()
+    ast.parse(text)                                  # no brace-escaping errors
+    assert "try:" in text and "except Exception" in text
+    assert '"failed": True' in text
+    assert 'result.json' in text and "raise SystemExit(1)" in text
+
+
 def test_render_run_py_finds_project_root_via_walk_up(tmp_path: Path, sample_program_spec):
     """The rendered run.py must locate framework/__init__.py by walking up
     from its own directory, NOT by hardcoded parents[N]. Verify by checking

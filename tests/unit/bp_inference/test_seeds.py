@@ -15,6 +15,24 @@ from bp_inference import data, minirocket, train
 TORCH = importlib.util.find_spec("torch") is not None
 
 
+def test_batched_predict_never_forwards_full_split():
+    """The eval forward must batch, or memory-heavy models OOM (the U-Net bug)."""
+    torch = pytest.importorskip("torch")
+
+    seen_batch_sizes = []
+
+    class Recorder(torch.nn.Module):
+        def forward(self, x):
+            seen_batch_sizes.append(len(x))
+            return x.reshape(len(x), -1)[:, :2]      # (B, 2) regression heads
+
+    X = torch.zeros(20, 8, 1)
+    out = train._batched_predict(Recorder(), X, bs=6)
+    assert out.shape[0] == 20                        # all samples predicted
+    assert sum(seen_batch_sizes) == 20               # exactly once each
+    assert max(seen_batch_sizes) <= 6                # never the whole split at once
+
+
 def _write_synth_train(tmp_path: Path, n=96, T=256, seed=1):
     X, y, subj = data.make_synthetic_split(n=n, T=T, seed=seed)
     np.savez(tmp_path / "train.npz", X=X, sbp=y[:, 0], dbp=y[:, 1], subjects=subj)

@@ -95,5 +95,7 @@ else
 fi
 
 echo "Array task ${SLURM_ARRAY_TASK_ID}: running ${RUN_DIR}/run.py at $(date) on $(hostname)"
-python -u "${RUN_DIR}/run.py" --run-dir "${RUN_DIR}" --data-root "${DATA_ROOT}"
+# tee output into the run dir so the full log returns via git (run.log is tracked).
+python -u "${RUN_DIR}/run.py" --run-dir "${RUN_DIR}" --data-root "${DATA_ROOT}" 2>&1 \
+    | tee "${RUN_DIR}/run.log"
 echo "Array task ${SLURM_ARRAY_TASK_ID} (${RUN_ID}) complete at $(date)"
