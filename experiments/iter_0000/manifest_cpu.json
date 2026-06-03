@@ -1,0 +1,20 @@
+{
+  "iteration": 0,
+  "compute": "cpu",
+  "experiments": [
+    {
+      "run_id": "seed_minirocket_free",
+      "run_dir": "experiments/iter_0000/seed_minirocket_free",
+      "family": "ridge_regressor_cv",
+      "regime": "free",
+      "name": "seed_minirocket_free"
+    },
+    {
+      "run_id": "seed_minirocket_cal",
+      "run_dir": "experiments/iter_0000/seed_minirocket_cal",
+      "family": "ridge_regressor_cv",
+      "regime": "per_subject",
+      "name": "seed_minirocket_cal"
+    }
+  ]
+}
