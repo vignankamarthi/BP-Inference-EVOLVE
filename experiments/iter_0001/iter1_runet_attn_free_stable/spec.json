@@ -1,0 +1,36 @@
+{
+  "calibration": {
+    "mode": "free"
+  },
+  "data": {
+    "signals": [
+      "ppg"
+    ],
+    "val_fraction": 0.2
+  },
+  "decode": {
+    "strategy": "identity"
+  },
+  "feature_extraction": null,
+  "model": {
+    "base_channels": 32,
+    "dropout": 0.2,
+    "family": "runet_attn",
+    "hop": 16,
+    "n_fft": 64,
+    "num_heads": 4,
+    "use_stft": true
+  },
+  "name": "iter1_runet_attn_free_stable",
+  "preprocessing": {
+    "normalize": "per_channel_zscore"
+  },
+  "training": {
+    "batch_size": 64,
+    "epochs": 50,
+    "loss": "l1",
+    "lr": 0.0003,
+    "optimizer": "adamw",
+    "seed": 42
+  }
+}

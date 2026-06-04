@@ -1,0 +1,34 @@
+{
+  "calibration": {
+    "cal_fraction": 0.2,
+    "mode": "per_subject"
+  },
+  "data": {
+    "signals": [
+      "ppg"
+    ],
+    "val_fraction": 0.2
+  },
+  "decode": {
+    "strategy": "identity"
+  },
+  "feature_extraction": null,
+  "model": {
+    "base_channels": 32,
+    "dropout": 0.2,
+    "family": "resunet_sa",
+    "num_heads": 8
+  },
+  "name": "iter1_resunet_sa_cal_wide",
+  "preprocessing": {
+    "normalize": "per_channel_zscore"
+  },
+  "training": {
+    "batch_size": 64,
+    "epochs": 40,
+    "loss": "smooth_l1",
+    "lr": 0.0007,
+    "optimizer": "adam",
+    "seed": 42
+  }
+}

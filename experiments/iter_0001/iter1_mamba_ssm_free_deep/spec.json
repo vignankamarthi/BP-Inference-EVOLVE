@@ -1,0 +1,33 @@
+{
+  "calibration": {
+    "mode": "free"
+  },
+  "data": {
+    "signals": [
+      "ppg"
+    ],
+    "val_fraction": 0.2
+  },
+  "decode": {
+    "strategy": "identity"
+  },
+  "feature_extraction": null,
+  "model": {
+    "dim": 64,
+    "dropout": 0.2,
+    "family": "mamba_ssm",
+    "n_layers": 4
+  },
+  "name": "iter1_mamba_ssm_free_deep",
+  "preprocessing": {
+    "normalize": "per_channel_zscore"
+  },
+  "training": {
+    "batch_size": 64,
+    "epochs": 50,
+    "loss": "mse",
+    "lr": 0.0005,
+    "optimizer": "adamw",
+    "seed": 42
+  }
+}

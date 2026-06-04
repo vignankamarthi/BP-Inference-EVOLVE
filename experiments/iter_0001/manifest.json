@@ -1,0 +1,77 @@
+{
+  "iteration": 1,
+  "experiments": [
+    {
+      "run_id": "iter1_mamba_ssm_cal_wide",
+      "run_dir": "experiments/iter_0001/iter1_mamba_ssm_cal_wide",
+      "family": "mamba_ssm",
+      "regime": "per_subject",
+      "name": "iter1_mamba_ssm_cal_wide",
+      "ledger_run_id": "r_00000009",
+      "parent_run_id": "r_00000001"
+    },
+    {
+      "run_id": "iter1_mamba_ssm_free_deep",
+      "run_dir": "experiments/iter_0001/iter1_mamba_ssm_free_deep",
+      "family": "mamba_ssm",
+      "regime": "free",
+      "name": "iter1_mamba_ssm_free_deep",
+      "ledger_run_id": "r_00000010",
+      "parent_run_id": "r_00000002"
+    },
+    {
+      "run_id": "iter1_minirocket_cal_widerf",
+      "run_dir": "experiments/iter_0001/iter1_minirocket_cal_widerf",
+      "family": "ridge_regressor_cv",
+      "regime": "per_subject",
+      "name": "iter1_minirocket_cal_widerf",
+      "ledger_run_id": "r_00000011",
+      "parent_run_id": "r_00000003"
+    },
+    {
+      "run_id": "iter1_minirocket_free_sharp",
+      "run_dir": "experiments/iter_0001/iter1_minirocket_free_sharp",
+      "family": "ridge_regressor_cv",
+      "regime": "free",
+      "name": "iter1_minirocket_free_sharp",
+      "ledger_run_id": "r_00000012",
+      "parent_run_id": "r_00000004"
+    },
+    {
+      "run_id": "iter1_resunet_sa_cal_wide",
+      "run_dir": "experiments/iter_0001/iter1_resunet_sa_cal_wide",
+      "family": "resunet_sa",
+      "regime": "per_subject",
+      "name": "iter1_resunet_sa_cal_wide",
+      "ledger_run_id": "r_00000013",
+      "parent_run_id": "r_00000005"
+    },
+    {
+      "run_id": "iter1_resunet_sa_free_reg",
+      "run_dir": "experiments/iter_0001/iter1_resunet_sa_free_reg",
+      "family": "resunet_sa",
+      "regime": "free",
+      "name": "iter1_resunet_sa_free_reg",
+      "ledger_run_id": "r_00000014",
+      "parent_run_id": "r_00000006"
+    },
+    {
+      "run_id": "iter1_runet_attn_cal_hifreq",
+      "run_dir": "experiments/iter_0001/iter1_runet_attn_cal_hifreq",
+      "family": "runet_attn",
+      "regime": "per_subject",
+      "name": "iter1_runet_attn_cal_hifreq",
+      "ledger_run_id": "r_00000015",
+      "parent_run_id": "r_00000007"
+    },
+    {
+      "run_id": "iter1_runet_attn_free_stable",
+      "run_dir": "experiments/iter_0001/iter1_runet_attn_free_stable",
+      "family": "runet_attn",
+      "regime": "free",
+      "name": "iter1_runet_attn_free_stable",
+      "ledger_run_id": "r_00000016",
+      "parent_run_id": "r_00000008"
+    }
+  ]
+}

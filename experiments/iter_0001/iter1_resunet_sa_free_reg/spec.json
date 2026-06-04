@@ -1,0 +1,33 @@
+{
+  "calibration": {
+    "mode": "free"
+  },
+  "data": {
+    "signals": [
+      "ppg"
+    ],
+    "val_fraction": 0.2
+  },
+  "decode": {
+    "strategy": "identity"
+  },
+  "feature_extraction": null,
+  "model": {
+    "base_channels": 24,
+    "dropout": 0.3,
+    "family": "resunet_sa",
+    "num_heads": 4
+  },
+  "name": "iter1_resunet_sa_free_reg",
+  "preprocessing": {
+    "normalize": "per_channel_zscore"
+  },
+  "training": {
+    "batch_size": 64,
+    "epochs": 50,
+    "loss": "mse",
+    "lr": 0.001,
+    "optimizer": "adamw",
+    "seed": 42
+  }
+}

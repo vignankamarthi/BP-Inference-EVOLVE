@@ -1,0 +1,40 @@
+{
+  "calibration": {
+    "cal_fraction": 0.2,
+    "mode": "per_subject"
+  },
+  "data": {
+    "signals": [
+      "ppg"
+    ],
+    "val_fraction": 0.2
+  },
+  "decode": {
+    "strategy": "identity"
+  },
+  "feature_extraction": {
+    "family": "minirocket",
+    "kernel_length": 11,
+    "num_kernels": 1000,
+    "random_state": 42
+  },
+  "model": {
+    "alphas": [
+      0.01,
+      0.1,
+      1.0,
+      10.0,
+      100.0,
+      1000.0
+    ],
+    "family": "ridge_regressor_cv"
+  },
+  "name": "iter1_minirocket_cal_widerf",
+  "preprocessing": {
+    "normalize": "per_channel_zscore"
+  },
+  "training": {
+    "loss": "ridge_regression_cv",
+    "seed": 42
+  }
+}

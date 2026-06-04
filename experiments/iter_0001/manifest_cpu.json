@@ -1,0 +1,24 @@
+{
+  "iteration": 1,
+  "compute": "cpu",
+  "experiments": [
+    {
+      "run_id": "iter1_minirocket_cal_widerf",
+      "run_dir": "experiments/iter_0001/iter1_minirocket_cal_widerf",
+      "family": "ridge_regressor_cv",
+      "regime": "per_subject",
+      "name": "iter1_minirocket_cal_widerf",
+      "ledger_run_id": "r_00000011",
+      "parent_run_id": "r_00000003"
+    },
+    {
+      "run_id": "iter1_minirocket_free_sharp",
+      "run_dir": "experiments/iter_0001/iter1_minirocket_free_sharp",
+      "family": "ridge_regressor_cv",
+      "regime": "free",
+      "name": "iter1_minirocket_free_sharp",
+      "ledger_run_id": "r_00000012",
+      "parent_run_id": "r_00000004"
+    }
+  ]
+}
