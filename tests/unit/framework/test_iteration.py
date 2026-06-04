@@ -73,7 +73,7 @@ def test_seed_population_assigns_dummy_fitness(tmp_db_path, seed_specs):
         for m in members:
             if m["run_id"] == rid:
                 assert m["fitness"] is not None
-                assert "balanced_acc" in m["fitness"]
+                assert "aami_margin" in m["fitness"]
 
 
 def test_prepare_batch_returns_one_entry_per_island(tmp_db_path, seed_specs):
@@ -129,40 +129,44 @@ def test_prepare_batch_prompt_is_markdown(tmp_db_path, seed_specs):
 
 def test_prepare_batch_composite_scoring_uses_novelty_alpha(tmp_db_path):
     """When meta_state.novelty_alpha is set, prepare_batch should pick parents
-    via fitness.scalar_score (composite of pareto + novelty + accuracy + ECE),
-    not raw balanced_acc. With alpha low (heavy novelty weight), the winner
-    can differ from the raw-accuracy winner."""
+    via fitness.compliance_scalar (composite of pareto + novelty + aami_margin),
+    not raw aami_margin. With alpha low (heavy novelty weight), the winner can
+    differ from the raw-margin winner."""
     import numpy as np
     led = ledger.Ledger(tmp_db_path)
     led.init_schema()
     spec = {"model": {"family": "bigru"}}
 
-    # Two members on island 0: A has higher acc but identical confusion to others
-    # (so low novelty); B has slightly lower acc but a different confusion.
+    # Two members on island 0: A has higher margin but an error signature
+    # identical to the reference (so low novelty); B has slightly lower margin
+    # but a different error signature (high novelty).
     rid_a = led.allocate_run_id()
     led.write_experiment(rid_a, spec, parent_id=None, island_id=0)
     led.write_result(rid_a, {
-        "balanced_acc": 0.45,
-        "confusion_3x3": [[10, 1, 1], [1, 10, 1], [1, 1, 10]],
-        "ece": 0.05, "param_count": 1000, "generalization_gap": 0.0,
+        "aami_margin": -3.0,
+        "error_signature": [1.0, 0.0, 0.0, 0.0],
+        "sbp_sd": 11.0, "dbp_sd": 7.0, "sbp_me_abs": 1.0, "dbp_me_abs": 1.0,
+        "param_count": 1000, "generalization_gap": 0.0,
     })
 
     rid_b = led.allocate_run_id()
     led.write_experiment(rid_b, spec, parent_id=None, island_id=0)
     led.write_result(rid_b, {
-        "balanced_acc": 0.40,
-        "confusion_3x3": [[5, 5, 2], [4, 6, 2], [3, 4, 5]],
-        "ece": 0.05, "param_count": 1000, "generalization_gap": 0.0,
+        "aami_margin": -3.5,
+        "error_signature": [0.0, 0.0, 0.0, 1.0],
+        "sbp_sd": 11.5, "dbp_sd": 7.0, "sbp_me_abs": 1.0, "dbp_me_abs": 1.0,
+        "param_count": 1000, "generalization_gap": 0.0,
     })
 
-    # Add a third "reference" member that's similar to A (so A has low novelty
-    # vs the population, B has high novelty).
+    # Add a third "reference" member similar to A (so A has low novelty vs the
+    # population, B has high novelty).
     rid_c = led.allocate_run_id()
     led.write_experiment(rid_c, spec, parent_id=None, island_id=0)
     led.write_result(rid_c, {
-        "balanced_acc": 0.44,
-        "confusion_3x3": [[10, 1, 1], [1, 10, 1], [1, 1, 10]],
-        "ece": 0.05, "param_count": 1000, "generalization_gap": 0.0,
+        "aami_margin": -3.1,
+        "error_signature": [1.0, 0.0, 0.0, 0.0],
+        "sbp_sd": 11.1, "dbp_sd": 7.0, "sbp_me_abs": 1.0, "dbp_me_abs": 1.0,
+        "param_count": 1000, "generalization_gap": 0.0,
     })
 
     # With composite scoring + heavy novelty weight (alpha=0.1), B can win
@@ -182,18 +186,16 @@ def test_prepare_batch_composite_scoring_uses_novelty_alpha(tmp_db_path):
 
 
 def test_prepare_batch_composite_off_uses_raw_accuracy(tmp_db_path):
-    """When composite_scoring=False (default), highest balanced_acc always wins."""
+    """When composite_scoring=False (default), highest aami_margin always wins."""
     led = ledger.Ledger(tmp_db_path)
     led.init_schema()
     spec = {"model": {"family": "bigru"}}
     rid_high = led.allocate_run_id()
     led.write_experiment(rid_high, spec, parent_id=None, island_id=0)
-    led.write_result(rid_high, {"balanced_acc": 0.50,
-                                "confusion_3x3": [[10, 0, 0]] * 3})
+    led.write_result(rid_high, {"aami_margin": -3.0})
     rid_low = led.allocate_run_id()
     led.write_experiment(rid_low, spec, parent_id=None, island_id=0)
-    led.write_result(rid_low, {"balanced_acc": 0.40,
-                               "confusion_3x3": [[10, 0, 0]] * 3})
+    led.write_result(rid_low, {"aami_margin": -5.0})
     # tournament_size >= island size => deterministic
     batch = it.prepare_batch(led, island_count=1, tournament_size=2,
                               rng_seed=0)
@@ -270,8 +272,7 @@ def test_prepare_batch_escalates_per_island_stagnation(tmp_db_path):
     # Island 0 has a "stale" winner (no improvement for many iters)
     rid = led.allocate_run_id()
     led.write_experiment(rid, spec, parent_id=None, island_id=0)
-    led.write_result(rid, {"balanced_acc": 0.42,
-                           "confusion_3x3": [[10, 0, 0]] * 3})
+    led.write_result(rid, {"aami_margin": -4.0})
     led.write_mutation_trace(iteration=1, run_id=rid, parent_run_ids=[],
                               prompt_context="", child_spec=spec,
                               fingerprint="fp_seed_0",
@@ -280,8 +281,7 @@ def test_prepare_batch_escalates_per_island_stagnation(tmp_db_path):
     for i in range(2, 32):
         rid_i = led.allocate_run_id()
         led.write_experiment(rid_i, spec, parent_id=rid, island_id=0)
-        led.write_result(rid_i, {"balanced_acc": 0.40,
-                                 "confusion_3x3": [[10, 0, 0]] * 3})
+        led.write_result(rid_i, {"aami_margin": -5.0})
         led.write_mutation_trace(iteration=i, run_id=rid_i,
                                   parent_run_ids=[rid],
                                   prompt_context="", child_spec=spec,
@@ -312,8 +312,7 @@ def test_prepare_batch_triggers_migration_on_long_stagnation(tmp_db_path):
     # Island 0: stagnant
     rid_a = led.allocate_run_id()
     led.write_experiment(rid_a, spec, parent_id=None, island_id=0)
-    led.write_result(rid_a, {"balanced_acc": 0.40,
-                             "confusion_3x3": [[10, 0, 0]] * 3})
+    led.write_result(rid_a, {"aami_margin": -5.0})
     led.write_mutation_trace(iteration=1, run_id=rid_a, parent_run_ids=[],
                               prompt_context="", child_spec=spec,
                               fingerprint="fp_a", reasoning_summary="",
@@ -322,8 +321,7 @@ def test_prepare_batch_triggers_migration_on_long_stagnation(tmp_db_path):
     for i in range(2, 30):
         rid_i = led.allocate_run_id()
         led.write_experiment(rid_i, spec, parent_id=rid_a, island_id=0)
-        led.write_result(rid_i, {"balanced_acc": 0.40,
-                                 "confusion_3x3": [[10, 0, 0]] * 3})
+        led.write_result(rid_i, {"aami_margin": -5.0})
         led.write_mutation_trace(iteration=i, run_id=rid_i, parent_run_ids=[rid_a],
                                   prompt_context="", child_spec=spec,
                                   fingerprint=f"fp_island0_{i}",
@@ -331,8 +329,7 @@ def test_prepare_batch_triggers_migration_on_long_stagnation(tmp_db_path):
     # Island 1: healthy
     rid_b = led.allocate_run_id()
     led.write_experiment(rid_b, spec, parent_id=None, island_id=1)
-    led.write_result(rid_b, {"balanced_acc": 0.55,
-                             "confusion_3x3": [[15, 0, 0]] * 3})
+    led.write_result(rid_b, {"aami_margin": -2.0})
     led.write_mutation_trace(iteration=30, run_id=rid_b, parent_run_ids=[],
                               prompt_context="", child_spec=spec,
                               fingerprint="fp_b", reasoning_summary="",

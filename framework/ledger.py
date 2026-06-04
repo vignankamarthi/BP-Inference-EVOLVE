@@ -472,7 +472,7 @@ class Ledger:
         ]
 
     def median_fitness_delta_per_island(self, window: int) -> float:
-        """Compute median balanced_acc delta per island over the last
+        """Compute median aami_margin delta per island over the last
         `window` completed experiments per island, then return the median
         across islands. Returns 0.0 when there is insufficient data.
         """
@@ -486,7 +486,7 @@ class Ledger:
         per_island: dict[int, list[float]] = {}
         for r in rows:
             try:
-                acc = json.loads(r["fitness_json"]).get("balanced_acc")
+                acc = json.loads(r["fitness_json"]).get("aami_margin")
             except (TypeError, ValueError):
                 continue
             if isinstance(acc, (int, float)):

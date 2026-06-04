@@ -278,7 +278,7 @@ def _seed_synthetic_ledger(led, n_iters, fitness_fn, fingerprint_fn,
         spec = {"model": {"family": fams[i % len(fams)]}}
         rid = led.allocate_run_id()
         led.write_experiment(rid, spec, parent_id=None, island_id=i % 4)
-        led.write_result(rid, {"balanced_acc": fitness_fn(i)})
+        led.write_result(rid, {"aami_margin": fitness_fn(i)})
         led.write_mutation_trace(
             iteration=i, run_id=rid, parent_run_ids=[],
             prompt_context="", child_spec=spec,

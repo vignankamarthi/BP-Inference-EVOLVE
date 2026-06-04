@@ -8,8 +8,9 @@ generational. One child per iteration. Parent picked by rank-based
 tournament selection. Lowest-fitness member of the island is evicted to
 make room.
 
-Fitness comparison uses the `fitness_key` (default 'balanced_acc') of the
-fitness vector dict that's passed alongside each run_id.
+Fitness comparison uses the `fitness_key` (default 'aami_margin', the BP
+regression primary objective) of the fitness vector dict passed alongside
+each run_id.
 
 Spec: FRAMEWORK.md Section 2.
 """
@@ -18,7 +19,7 @@ import math
 import random
 
 
-_DEFAULT_FITNESS_KEY = "balanced_acc"
+_DEFAULT_FITNESS_KEY = "aami_margin"
 
 
 @dataclass

@@ -343,13 +343,13 @@ def test_median_fitness_delta_per_island_basic(tmp_db_path, sample_program_spec)
     for acc in (0.40, 0.45, 0.50):
         rid = led.allocate_run_id()
         led.write_experiment(rid, sample_program_spec, parent_id=None, island_id=0)
-        led.write_result(rid, {"balanced_acc": acc})
+        led.write_result(rid, {"aami_margin": acc})
         _time.sleep(0.002)
     # Island 1: 0.42 -> 0.42 -> 0.42 (deltas 0, 0; per-island median 0)
     for acc in (0.42, 0.42, 0.42):
         rid = led.allocate_run_id()
         led.write_experiment(rid, sample_program_spec, parent_id=None, island_id=1)
-        led.write_result(rid, {"balanced_acc": acc})
+        led.write_result(rid, {"aami_margin": acc})
         _time.sleep(0.002)
     delta = led.median_fitness_delta_per_island(window=20)
     # median of per-island medians [0.05, 0.0] = 0.025

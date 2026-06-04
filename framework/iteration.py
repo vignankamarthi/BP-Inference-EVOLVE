@@ -49,10 +49,11 @@ from framework.breakdown import (
 )
 from framework.constraints import ConstraintViolation
 from framework.fitness import (
-    confidence_weighted,
+    REGRESSION_DIRECTIONS,
+    REGRESSION_PARETO_AXES,
+    compliance_scalar,
     novelty_score,
     pareto_rank,
-    scalar_score,
 )
 from framework.ledger import Ledger
 from framework.meta import step_meta_state
@@ -63,9 +64,13 @@ from framework.population import Islands
 # Placeholder fitness assigned to fresh seeds so tournament selection works.
 # A real fitness lands once the seed is trained on cluster.
 _SEED_PLACEHOLDER_FITNESS: dict[str, Any] = {
-    "balanced_acc": 0.333,  # random baseline for 3-class
-    "macro_f1": 0.0,
-    "ece": 0.5,
+    # Deliberately far outside the AAMI box (margin <= 0 means non-compliant);
+    # any real trained child beats it, so tournament selection is well-defined.
+    "aami_margin": -100.0,
+    "sbp_sd": 100.0,
+    "dbp_sd": 100.0,
+    "sbp_me_abs": 100.0,
+    "dbp_me_abs": 100.0,
     "param_count": 0,
     "train_seconds": 0.0,
     "generalization_gap": 0.0,
@@ -139,11 +144,11 @@ def _spec_for_run_id(ledger: Ledger, run_id: str) -> dict:
 
 
 def _island_best_specs(ledger: Ledger, island_id: int, k: int = 5) -> list[dict]:
-    """Top-k specs in an island by balanced_acc (descending)."""
+    """Top-k specs in an island by aami_margin (descending; higher = more compliant)."""
     members = ledger.get_island_members(island_id)
     members_with_fitness = [m for m in members if m.get("fitness")]
     members_with_fitness.sort(
-        key=lambda m: m["fitness"].get("balanced_acc", -1.0),
+        key=lambda m: m["fitness"].get("aami_margin", -math.inf),
         reverse=True,
     )
     return [m["spec"] for m in members_with_fitness[:k]]
@@ -152,62 +157,53 @@ def _island_best_specs(ledger: Ledger, island_id: int, k: int = 5) -> list[dict]
 def _composite_tournament(ledger: Ledger, island_id: int,
                            tournament_size: int, meta: MetaState,
                            ece_lambda: float, rng: random.Random) -> str:
-    """Tournament selection using `framework.fitness.scalar_score`.
+    """Tournament selection using `framework.fitness.compliance_scalar`.
 
-    Builds Pareto rank + novelty score per island member, then samples
-    `tournament_size` candidates and picks the highest composite. `alpha`
-    in scalar_score = meta.novelty_alpha. Falls back to raw-accuracy if any
-    member lacks confusion_3x3 (e.g., seed placeholder fitness).
+    Builds the regression Pareto front (REGRESSION_PARETO_AXES) + error-distribution
+    novelty per island member, then samples `tournament_size` candidates and picks
+    the highest composite. `alpha` in compliance_scalar = meta.novelty_alpha. Falls
+    back to raw aami_margin if any member lacks an error_signature (e.g., a seed
+    placeholder that has not been trained on cluster yet).
     """
     members = [m for m in ledger.get_island_members(island_id)
                if m.get("fitness")]
     if not members:
         raise ValueError(f"island {island_id} is empty")
 
-    # If any member lacks a real confusion matrix, raw-accuracy fallback
-    cms = [m["fitness"].get("confusion_3x3") for m in members]
-    if any(cm is None for cm in cms):
-        members.sort(key=lambda m: m["fitness"].get("balanced_acc", -math.inf),
+    # If any member lacks a real error-distribution signature, raw-margin fallback
+    sigs = [m["fitness"].get("error_signature") for m in members]
+    if any(sig is None for sig in sigs):
+        members.sort(key=lambda m: m["fitness"].get("aami_margin", -math.inf),
                      reverse=True)
         size = min(tournament_size, len(members))
         candidates = rng.sample(members, size)
         return max(candidates,
-                   key=lambda m: m["fitness"].get("balanced_acc", -math.inf)
+                   key=lambda m: m["fitness"].get("aami_margin", -math.inf)
                    )["run_id"]
 
-    cms_np = [np.array(cm, dtype=np.float64) for cm in cms]
-    # Pareto: minimize gap, params; maximize bal_acc (we negate it for the
-    # minimize-everywhere convention)
+    sigs_np = [np.asarray(sig, dtype=np.float64) for sig in sigs]
+    # Pareto front over the regression axes (all minimized per REGRESSION_DIRECTIONS:
+    # both targets' error SD and |ME|, plus params and generalization gap).
     fitness_vectors = []
     for m in members:
         fv = m["fitness"]
-        fitness_vectors.append({
-            "neg_bal_acc": -float(fv.get("balanced_acc", 0.0)),
-            "gap": float(fv.get("generalization_gap", 0.0)),
-            "params": float(fv.get("param_count", 0)),
-            "ece": float(fv.get("ece", 0.5)),
-        })
-    ranks = pareto_rank(
-        fitness_vectors,
-        axes=["neg_bal_acc", "gap", "params", "ece"],
-        directions={"neg_bal_acc": "minimize", "gap": "minimize",
-                    "params": "minimize", "ece": "minimize"},
-    )
+        fitness_vectors.append({ax: float(fv.get(ax, 0.0))
+                                for ax in REGRESSION_PARETO_AXES})
+    ranks = pareto_rank(fitness_vectors, axes=REGRESSION_PARETO_AXES,
+                        directions=REGRESSION_DIRECTIONS)
 
     # Composite score per member
     scored = []
     for i, m in enumerate(members):
         fv = m["fitness"]
-        # Novelty = mean kNN distance to other members' confusion matrices
-        others = [cms_np[j] for j in range(len(members)) if j != i]
-        nov = novelty_score(cms_np[i], others, k=min(5, max(1, len(others))))
-        s = scalar_score(
-            pareto_rank_value=ranks[i],
+        # Novelty = mean kNN distance to other members' error-distribution signatures
+        others = [sigs_np[j] for j in range(len(members)) if j != i]
+        nov = novelty_score(sigs_np[i], others, k=min(5, max(1, len(others))))
+        s = compliance_scalar(
+            fitness=fv,
             novelty=nov,
-            accuracy=float(fv.get("balanced_acc", 0.0)),
-            ece=float(fv.get("ece", 0.5)),
             alpha=meta.novelty_alpha,
-            lam=ece_lambda,
+            pareto_rank_value=ranks[i],
         )
         scored.append((s, m["run_id"]))
 
@@ -220,14 +216,14 @@ def _island_stagnation_gap(ledger: Ledger, island_id: int) -> int:
     """Count of completed children on this island since its last fitness
     improvement. 0 means the most-recent child IS the best."""
     members = [m for m in ledger.get_island_members(island_id)
-               if m.get("fitness") and m["fitness"].get("balanced_acc") is not None]
+               if m.get("fitness") and m["fitness"].get("aami_margin") is not None]
     if len(members) < 2:
         return 0
     members.sort(key=lambda m: m.get("completed_at") or 0.0)
     best_so_far = -float("inf")
     last_improvement_idx = 0
     for i, m in enumerate(members):
-        acc = m["fitness"]["balanced_acc"]
+        acc = m["fitness"]["aami_margin"]
         if acc > best_so_far:
             best_so_far = acc
             last_improvement_idx = i
@@ -246,7 +242,7 @@ def _foreign_champion(ledger: Ledger, island_count: int,
         for m in ledger.get_island_members(j):
             if not m.get("fitness"):
                 continue
-            acc = m["fitness"].get("balanced_acc", -float("inf"))
+            acc = m["fitness"].get("aami_margin", -float("inf"))
             if acc > best_acc:
                 best_acc = acc
                 best = (j, m["run_id"], m["spec"])
@@ -294,7 +290,7 @@ def prepare_batch(ledger: Ledger, island_count: int,
       foreign_parent_run_id, foreign_parent_spec: the migration co-parent
 
     Wired Level 1 mechanisms:
-      composite_scoring=True   -> fitness.scalar_score for tournament
+      composite_scoring=True   -> fitness.compliance_scalar for tournament
       evolve_meta=True         -> step_meta_state across batches (persists to ledger)
       stagnation_patience=N    -> per-island stagnation_escalation when gap >= N
       migration_patience=N     -> trigger_migration with foreign co-parent when gap >= N
@@ -329,7 +325,7 @@ def prepare_batch(ledger: Ledger, island_count: int,
         for i in range(island_count):
             for m in ledger.get_island_members(i):
                 if m["run_id"] == t["run_id"] and m.get("fitness"):
-                    recent_accs.append(m["fitness"].get("balanced_acc", 0.0))
+                    recent_accs.append(m["fitness"].get("aami_margin", 0.0))
                     break
     for i in range(1, len(recent_accs)):
         recent_deltas.append(recent_accs[i] - recent_accs[i - 1])
