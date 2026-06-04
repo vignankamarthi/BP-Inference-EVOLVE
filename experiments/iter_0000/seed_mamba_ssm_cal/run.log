@@ -1,0 +1,2 @@
+[mamba_ssm] ep 0: loss=0.3763 margin=-4.774 sbp_mae=9.56 dbp_mae=5.06
+[mamba_ssm] ep 1: loss=0.3523 margin=-4.534 sbp_mae=9.36 dbp_mae=5.01
