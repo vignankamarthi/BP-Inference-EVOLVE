@@ -17,12 +17,66 @@ from torch import nn
 from bp_inference import train
 
 
+def ssm_scan(a: torch.Tensor, b: torch.Tensor, chunk: int = 64) -> torch.Tensor:
+    """Exact parallel form of the recurrence h_t = a * h_{t-1} + b_t (h_{-1}=0).
+
+    `a` is a per-channel decay of shape (D,), constant over time, so the
+    recurrence is linear and *time-invariant* and has a closed parallel form.
+    We use a chunked scan: an intra-chunk decay-weighted prefix sum (one einsum,
+    parallel over all chunks) plus a short sequential carry across the L/chunk
+    chunk boundaries. This replaces the O(L) Python loop with ~L/chunk
+    sequential steps, exact to floating point. With chunk M[i,j,d]=a_d^(i-j)
+    (i>=j) the within-chunk sum is local[c,i]=sum_{j<=i} a^(i-j) b[c,j], and the
+    boundary state obeys S_{c+1}=a^C S_c + local[c,C-1], giving the global state
+    h[c,i] = local[c,i] + a^(i+1) S_c.
+
+    Args:
+        a: (D,) decay coefficients, expected in (0, 1).
+        b: (B, L, D) input term (already g_t * x_t in the SSM block).
+        chunk: chunk length; capped at L.
+    Returns:
+        (B, L, D) scanned states h_t for t in [0, L).
+    """
+    B, L, D = b.shape
+    C = min(chunk, L)
+    n_chunks = (L + C - 1) // C
+    pad = n_chunks * C - L
+    if pad:
+        b = F.pad(b, (0, 0, 0, pad))                 # zero-pad time axis at the end
+    bc = b.view(B, n_chunks, C, D)
+
+    idx = torch.arange(C, device=b.device)
+    expo = idx[:, None] - idx[None, :]               # (C, C): i - j
+    lower = expo >= 0
+    M = torch.where(                                 # M[i,j,d] = a_d^(i-j) if i>=j else 0
+        lower[..., None],
+        a.pow(expo.clamp(min=0).to(a.dtype)[..., None]),
+        torch.zeros((), dtype=a.dtype, device=b.device),
+    )
+    local = torch.einsum("ijd,bcjd->bcid", M, bc)    # (B, n_chunks, C, D)
+
+    a_C = a.pow(C)                                    # (D,)
+    last = local[:, :, C - 1, :]                      # (B, n_chunks, D)
+    S = torch.zeros(B, D, dtype=b.dtype, device=b.device)
+    carries = []
+    for c in range(n_chunks):                         # ~L/chunk sequential steps
+        carries.append(S)
+        S = a_C * S + last[:, c]
+    carries = torch.stack(carries, dim=1)             # (B, n_chunks, D): state before each chunk
+
+    a_pow = a.pow(torch.arange(1, C + 1, device=b.device).to(a.dtype)[:, None])  # (C, D): a^(i+1)
+    h = local + a_pow[None, None] * carries[:, :, None, :]   # (B, n_chunks, C, D)
+    return h.reshape(B, n_chunks * C, D)[:, :L]
+
+
 class SSMBlock(nn.Module):
     """Diagonal linear recurrence h_t = a * h_{t-1} + g_t * x_t with SiLU gating.
 
     `a = sigmoid(a_logit)` is a per-channel decay in (0, 1) (time-invariant,
     S4-lite). `g_t = sigmoid(W x_t)` is the input-dependent selective gate. The
-    scan is sequential over time (O(T)); fine for PPG-length sequences.
+    scan over time is computed in parallel by `ssm_scan` (chunked) -- exact to
+    the sequential recurrence but ~L/chunk sequential steps instead of L, which
+    is what makes a 1250-sample PPG window tractable on the GPU.
     """
 
     def __init__(self, dim: int, conv_k: int = 4):
@@ -44,12 +98,7 @@ class SSMBlock(nn.Module):
         uc = F.silu(uc)
         g = torch.sigmoid(self.gate(x))          # selective input gate
         a = torch.sigmoid(self.a_logit)          # (D,) decay
-        h = torch.zeros(x.shape[0], x.shape[2], device=x.device, dtype=x.dtype)
-        outs = []
-        for t in range(x.shape[1]):
-            h = a * h + g[:, t] * uc[:, t]
-            outs.append(h)
-        y = torch.stack(outs, dim=1)             # (B, L, D)
+        y = ssm_scan(a, g * uc)                  # exact parallel linear-recurrence scan
         y = y * F.silu(self.out_gate(x))         # output gating
         return res + self.out_proj(y)
 
