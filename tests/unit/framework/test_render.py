@@ -44,7 +44,17 @@ def test_rendered_run_py_is_valid_python_with_failure_capture(tmp_path, sample_p
     ast.parse(text)                                  # no brace-escaping errors
     assert "try:" in text and "except Exception" in text
     assert '"failed": True' in text
-    assert 'result.json' in text and "raise SystemExit(1)" in text
+    assert 'result.json' in text and "_os._exit(1)" in text
+
+
+def test_rendered_run_py_hard_exits_after_success(tmp_path, sample_program_spec):
+    """run.py force-exits (os._exit) once result.json is written, so the process
+    cannot linger through CUDA teardown holding an idle GPU (iter-0 regression)."""
+    import ast
+    out = render.render_spec_to_code(sample_program_spec, tmp_path)
+    text = out.read_text()
+    ast.parse(text)
+    assert "_os._exit(0)" in text                    # clean-exit guard on success
 
 
 def test_render_run_py_finds_project_root_via_walk_up(tmp_path: Path, sample_program_spec):

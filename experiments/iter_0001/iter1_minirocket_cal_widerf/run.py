@@ -34,7 +34,7 @@ if __name__ == "__main__":
     # Always emit a result.json so failures are visible after a git pull (the
     # SLURM logs/ dir is gitignored). On crash, record the traceback and exit 1
     # so SLURM still marks the task FAILED.
-    import json as _json, traceback as _tb
+    import json as _json, os as _os, traceback as _tb
     try:
         run_from_dir(args.run_dir, args.data_root)
     except Exception:
@@ -42,4 +42,12 @@ if __name__ == "__main__":
         (args.run_dir / "result.json").write_text(_json.dumps(
             {"name": args.run_dir.name, "failed": True, "error": tb}, indent=2))
         print(tb, flush=True)
-        raise SystemExit(1)
+        sys.stdout.flush()
+        _os._exit(1)
+    # result.json is durably on disk now; hard-exit so the GPU is reclaimed the
+    # instant the result is safe, instead of lingering through Python/CUDA
+    # interpreter teardown of the multi-GB on-device tensors (the iter-0 idle-
+    # H200 cause). os._exit skips atexit + CUDA teardown by design; every print
+    # above already used flush=True.
+    sys.stdout.flush()
+    _os._exit(0)
