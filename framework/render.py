@@ -34,6 +34,13 @@ FAMILY_ENTRY_POINTS: dict[str, tuple[str, str]] = {
     "runet_attn": ("bp_inference.runet_attn", "run_from_dir"),
     "resunet_sa": ("bp_inference.resunet_sa", "run_from_dir"),
     "mamba_ssm": ("bp_inference.mamba_ssm", "run_from_dir"),
+    "tcn": ("bp_inference.tcn", "run_from_dir"),
+    "xresnet1d": ("bp_inference.xresnet1d", "run_from_dir"),
+    "transformer1d": ("bp_inference.transformer1d", "run_from_dir"),
+    "wavelet_net": ("bp_inference.wavelet_net", "run_from_dir"),
+    "inception1d": ("bp_inference.inception1d", "run_from_dir"),
+    "s4": ("bp_inference.s4", "run_from_dir"),
+    "bigru": ("bp_inference.bigru", "run_from_dir"),
 }
 
 # Which compute each family needs. MiniRocket is numpy + sklearn (CPU-only); a
@@ -45,6 +52,13 @@ FAMILY_COMPUTE: dict[str, str] = {
     "runet_attn": "gpu",
     "resunet_sa": "gpu",
     "mamba_ssm": "gpu",
+    "tcn": "gpu",
+    "xresnet1d": "gpu",
+    "transformer1d": "gpu",
+    "wavelet_net": "gpu",
+    "inception1d": "gpu",
+    "s4": "gpu",
+    "bigru": "gpu",
 }
 
 
