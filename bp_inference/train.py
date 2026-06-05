@@ -37,6 +37,27 @@ def per_channel_zscore(Xtr: np.ndarray, Xv: np.ndarray):
     return ((Xtr - mean) / std).astype(np.float32), ((Xv - mean) / std).astype(np.float32)
 
 
+def add_derivative_channels(X: np.ndarray, derivatives) -> np.ndarray:
+    """Append PPG-derived velocity/acceleration channels (VPG/APG) to X.
+
+    X is (N, T, C) with the raw PPG in channel 0. `derivatives` is a subset of
+    ['vpg', 'apg']: VPG = d/dt PPG (1st diff), APG = d2/dt2 PPG (2nd diff), each
+    length-preserved (prepend the edge so T is unchanged) and stacked as extra
+    channels. The SOURCE stays PPG-only (ANTIPATTERNS rule 2); the multi-channel
+    result is a LABELED ABLATION arm, never the hero. Empty list -> X unchanged.
+    """
+    if not derivatives:
+        return X
+    ppg = X[..., 0]                                  # (N, T)
+    chans = [X[..., c] for c in range(X.shape[-1])]  # keep existing channel(s)
+    vpg = np.diff(ppg, axis=-1, prepend=ppg[..., :1])
+    if "vpg" in derivatives:
+        chans.append(vpg)
+    if "apg" in derivatives:
+        chans.append(np.diff(vpg, axis=-1, prepend=vpg[..., :1]))
+    return np.stack(chans, axis=-1).astype(X.dtype)
+
+
 def standardize_targets(ytr: np.ndarray):
     """Return (mean, std) fit on train targets for stable regression."""
     mean = ytr.mean(axis=0)
@@ -98,14 +119,24 @@ def _atomic_write_json(path: Path, payload: dict) -> None:
     tmp.replace(path)
 
 
-def _loss_fn(name: str):
+def _loss_fn(name: str, weights=None):
     import torch
     name = (name or "smooth_l1").lower()
-    if name in ("mse", "l2"):
-        return torch.nn.MSELoss()
-    if name in ("l1", "mae"):
-        return torch.nn.L1Loss()
-    return torch.nn.SmoothL1Loss()           # robust default (Huber)
+    cls = (torch.nn.MSELoss if name in ("mse", "l2")
+           else torch.nn.L1Loss if name in ("l1", "mae")
+           else torch.nn.SmoothL1Loss)       # robust default (Huber)
+    if not weights:
+        return cls()
+    # Per-target weighting (e.g. SBP-heavy, since SBP SD is the binding AAMI axis).
+    w = torch.tensor([float(x) for x in weights], dtype=torch.float32)
+    base = cls(reduction="none")
+
+    def weighted(pred, target):
+        per = base(pred, target)             # (B, n_targets)
+        ww = w.to(per.device)
+        return (per * ww).sum() / (ww.sum() * per.shape[0])
+
+    return weighted
 
 
 def _load_train_val(data_root: Path, spec: dict):
@@ -166,6 +197,9 @@ def run_regression_model(model_factory, spec: dict, data_root: Path,
     np.random.seed(seed)
 
     (Xtr, ytr, _), (Xv, yv, sv) = _load_train_val(data_root, spec)
+    derivs = spec.get("preprocessing", {}).get("derivatives", [])
+    Xtr = add_derivative_channels(Xtr, derivs)
+    Xv = add_derivative_channels(Xv, derivs)
     Xtr, Xv = per_channel_zscore(Xtr, Xv)
     t_mean, t_std = standardize_targets(ytr)
     ytr_std = ((ytr - t_mean) / t_std).astype(np.float32)
@@ -180,7 +214,8 @@ def run_regression_model(model_factory, spec: dict, data_root: Path,
     lr = float(train_cfg.get("lr", 1e-3))
     optim = (torch.optim.AdamW if train_cfg.get("optimizer", "adam").lower() == "adamw"
              else torch.optim.Adam)(model.parameters(), lr=lr)
-    loss_fn = _loss_fn(train_cfg.get("loss", "smooth_l1"))
+    loss_fn = _loss_fn(train_cfg.get("loss", "smooth_l1"),
+                       weights=train_cfg.get("loss_weights"))
     calib_cfg = spec.get("calibration", {"mode": "free"})
 
     Xtr_t = torch.from_numpy(Xtr).to(device)
