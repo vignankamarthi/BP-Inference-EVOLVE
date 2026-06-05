@@ -1,0 +1,61 @@
+{
+  "compute": "gpu",
+  "experiments": [
+    {
+      "run_id": "screen_resunet_sa",
+      "run_dir": "experiments/screen_arch/screen_resunet_sa",
+      "family": "resunet_sa",
+      "regime": "per_subject",
+      "name": "screen_resunet_sa"
+    },
+    {
+      "run_id": "screen_tcn",
+      "run_dir": "experiments/screen_arch/screen_tcn",
+      "family": "tcn",
+      "regime": "per_subject",
+      "name": "screen_tcn"
+    },
+    {
+      "run_id": "screen_xresnet1d",
+      "run_dir": "experiments/screen_arch/screen_xresnet1d",
+      "family": "xresnet1d",
+      "regime": "per_subject",
+      "name": "screen_xresnet1d"
+    },
+    {
+      "run_id": "screen_transformer1d",
+      "run_dir": "experiments/screen_arch/screen_transformer1d",
+      "family": "transformer1d",
+      "regime": "per_subject",
+      "name": "screen_transformer1d"
+    },
+    {
+      "run_id": "screen_wavelet_net",
+      "run_dir": "experiments/screen_arch/screen_wavelet_net",
+      "family": "wavelet_net",
+      "regime": "per_subject",
+      "name": "screen_wavelet_net"
+    },
+    {
+      "run_id": "screen_inception1d",
+      "run_dir": "experiments/screen_arch/screen_inception1d",
+      "family": "inception1d",
+      "regime": "per_subject",
+      "name": "screen_inception1d"
+    },
+    {
+      "run_id": "screen_s4",
+      "run_dir": "experiments/screen_arch/screen_s4",
+      "family": "s4",
+      "regime": "per_subject",
+      "name": "screen_s4"
+    },
+    {
+      "run_id": "screen_bigru",
+      "run_dir": "experiments/screen_arch/screen_bigru",
+      "family": "bigru",
+      "regime": "per_subject",
+      "name": "screen_bigru"
+    }
+  ]
+}
