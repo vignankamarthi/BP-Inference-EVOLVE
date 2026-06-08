@@ -1,0 +1,38 @@
+{
+  "calibration": {
+    "cal_fraction": 0.2,
+    "mode": "per_subject"
+  },
+  "data": {
+    "signals": [
+      "ppg"
+    ],
+    "val_fraction": 0.2
+  },
+  "decode": {
+    "strategy": "identity"
+  },
+  "feature_extraction": null,
+  "model": {
+    "channels": 32,
+    "dropout": 0.2,
+    "family": "wavelet_net",
+    "levels": 5
+  },
+  "name": "lever_wavelet_net_vpg_apg_s0",
+  "preprocessing": {
+    "derivatives": [
+      "vpg",
+      "apg"
+    ],
+    "normalize": "per_channel_zscore"
+  },
+  "training": {
+    "batch_size": 64,
+    "epochs": 40,
+    "loss": "smooth_l1",
+    "lr": 0.0005,
+    "optimizer": "adamw",
+    "seed": 42
+  }
+}

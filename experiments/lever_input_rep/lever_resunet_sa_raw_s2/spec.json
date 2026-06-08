@@ -1,0 +1,34 @@
+{
+  "calibration": {
+    "cal_fraction": 0.2,
+    "mode": "per_subject"
+  },
+  "data": {
+    "signals": [
+      "ppg"
+    ],
+    "val_fraction": 0.2
+  },
+  "decode": {
+    "strategy": "identity"
+  },
+  "feature_extraction": null,
+  "model": {
+    "base_channels": 24,
+    "dropout": 0.2,
+    "family": "resunet_sa",
+    "num_heads": 4
+  },
+  "name": "lever_resunet_sa_raw_s2",
+  "preprocessing": {
+    "normalize": "per_channel_zscore"
+  },
+  "training": {
+    "batch_size": 64,
+    "epochs": 40,
+    "loss": "smooth_l1",
+    "lr": 0.0005,
+    "optimizer": "adamw",
+    "seed": 44
+  }
+}
