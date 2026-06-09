@@ -58,3 +58,32 @@ def enumerate_lever_configs(backbones, factor_levels, n_seeds: int = 3,
                 spec.setdefault("training", {})["seed"] = base_seed + s
                 specs.append(spec)
     return specs
+
+
+# Family-specific "extended receptive field" bumps (the RF lever is NOT a
+# universal override: each backbone enlarges temporal context differently --
+# depth for conv/resnet, more decomposition levels for wavelet, a longer global
+# kernel for s4 -- so it is built per backbone, not stored in FACTORS).
+# Only families with a gene that genuinely widens the receptive field. NOT
+# resunet_sa / runet_attn: their depth is hardcoded and they already attend
+# globally (a bottleneck self-attention spans the full window), so there is no
+# RF knob to turn -- rf_levels returns std-only for them.
+RF_EXTENDED = {
+    "wavelet_net": {"levels": 7},          # was 5: more multi-resolution depth
+    "tcn": {"n_blocks": 9},                # was 6: exponentially longer dilated RF
+    "xresnet1d": {"n_stages": 5},          # was 4: deeper downsample stack
+    "s4": {"kernel_len": 384},             # was 128: longer global conv kernel
+    "inception1d": {"n_blocks": 5},        # was 3: more downsampling depth
+    "mamba_ssm": {"n_layers": 4},          # was 2: deeper selective scan
+}
+
+
+def rf_levels(family: str):
+    """RF lever levels for one backbone: ('std', no-op) + ('ext', model-gene
+    bump that widens the receptive field). The override targets `model`, so the
+    deep-merge keeps the family and the other model genes."""
+    levels = [("std", {})]
+    ext = RF_EXTENDED.get(family)
+    if ext:
+        levels.append(("ext", {"model": dict(ext)}))
+    return levels

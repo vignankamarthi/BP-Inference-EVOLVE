@@ -50,3 +50,31 @@ def test_loss_factor_applies_weights():
     sbp = next(s for s in specs if "sbp2x" in s["name"])
     assert sbp["training"]["loss_weights"] == [2.0, 1.0]
     assert sbp["training"]["loss"] == "smooth_l1"          # base loss form preserved
+
+
+def test_rf_levels_std_then_ext():
+    from bp_inference.ablation import rf_levels
+    lv = rf_levels("tcn")                                  # tcn has a tunable RF (n_blocks)
+    assert [lab for lab, _ in lv] == ["std", "ext"]
+    assert lv[0][1] == {}                                  # std = baseline, no override
+    assert "model" in lv[1][1]                             # ext overrides model genes
+
+
+def test_rf_levels_std_only_when_no_knob():
+    from bp_inference.ablation import rf_levels
+    lv = rf_levels("resunet_sa")                           # fixed/global RF, no knob
+    assert [lab for lab, _ in lv] == ["std"]               # no ext arm rendered
+
+
+def test_rf_ext_is_family_specific():
+    from bp_inference.ablation import rf_levels
+    assert rf_levels("wavelet_net")[1][1]["model"] != rf_levels("tcn")[1][1]["model"]
+
+
+def test_rf_ext_merge_preserves_family_and_siblings():
+    from bp_inference.ablation import _merge, rf_levels
+    base = {**BASE, "model": {"family": "xresnet1d", "base_channels": 32}}
+    merged = _merge(base, rf_levels("xresnet1d")[1][1])
+    assert merged["model"]["family"] == "xresnet1d"        # family preserved
+    assert merged["model"]["base_channels"] == 32          # sibling preserved
+    assert merged["model"]["n_stages"] == 5                # RF gene set

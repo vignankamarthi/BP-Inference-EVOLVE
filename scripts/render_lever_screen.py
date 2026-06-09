@@ -23,7 +23,7 @@ while _ROOT != _ROOT.parent and not (_ROOT / "framework" / "__init__.py").exists
     _ROOT = _ROOT.parent
 sys.path.insert(0, str(_ROOT))
 
-from bp_inference.ablation import FACTORS, enumerate_lever_configs
+from bp_inference.ablation import FACTORS, enumerate_lever_configs, rf_levels
 from framework import render
 
 SCREEN = _ROOT / "experiments" / "screen_arch"
@@ -68,7 +68,7 @@ def _smoke(spec) -> int:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--factor", required=True, choices=sorted(FACTORS))
+    ap.add_argument("--factor", required=True, choices=sorted(list(FACTORS) + ["rf"]))
     ap.add_argument("--top-k", type=int, default=2)
     ap.add_argument("--n-seeds", type=int, default=3)
     args = ap.parse_args()
@@ -80,13 +80,28 @@ def main():
 
     print(f"== top-{args.top_k} survivors from the architecture screen ==")
     survivors = _top_survivors(args.top_k)
-    specs = enumerate_lever_configs(survivors, FACTORS[args.factor], n_seeds=args.n_seeds)
+    if args.factor == "rf":
+        from bp_inference.ablation import RF_EXTENDED
+        specs = []
+        for fam, base in survivors:                # RF levels are per-backbone
+            if fam not in RF_EXTENDED:
+                print(f"  skip {fam}: no tunable RF knob (fixed/global RF)")
+                continue
+            specs += enumerate_lever_configs([(fam, base)], rf_levels(fam),
+                                             n_seeds=args.n_seeds)
+    else:
+        specs = enumerate_lever_configs(survivors, FACTORS[args.factor],
+                                        n_seeds=args.n_seeds)
 
     print(f"\n== smoke test (unique backbone x input-rep; {len(specs)} configs total) ==")
     experiments, smoked = [], {}
     for spec in specs:
+        # unique model build = family + in_channels (via derivatives) + model cfg
+        # (the RF lever varies model cfg at the same derivatives, so it must be
+        # in the key or the bigger 'ext' models never get smoke-tested).
         key = (spec["model"]["family"],
-               tuple(spec.get("preprocessing", {}).get("derivatives", [])))
+               tuple(spec.get("preprocessing", {}).get("derivatives", [])),
+               json.dumps(spec["model"], sort_keys=True))
         if key not in smoked:
             smoked[key] = _smoke(spec)
             print(f"  ok  {key[0]:14s} in_ch={1 + len(key[1])}  {smoked[key]:>10,} params")
