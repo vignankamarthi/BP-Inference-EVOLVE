@@ -1,0 +1,47 @@
+{
+  "factor": "rf",
+  "experiments": [
+    {
+      "run_id": "lever_wavelet_net_std_s0",
+      "run_dir": "experiments/lever_rf/lever_wavelet_net_std_s0",
+      "family": "wavelet_net",
+      "regime": "per_subject",
+      "name": "lever_wavelet_net_std_s0"
+    },
+    {
+      "run_id": "lever_wavelet_net_std_s1",
+      "run_dir": "experiments/lever_rf/lever_wavelet_net_std_s1",
+      "family": "wavelet_net",
+      "regime": "per_subject",
+      "name": "lever_wavelet_net_std_s1"
+    },
+    {
+      "run_id": "lever_wavelet_net_std_s2",
+      "run_dir": "experiments/lever_rf/lever_wavelet_net_std_s2",
+      "family": "wavelet_net",
+      "regime": "per_subject",
+      "name": "lever_wavelet_net_std_s2"
+    },
+    {
+      "run_id": "lever_wavelet_net_ext_s0",
+      "run_dir": "experiments/lever_rf/lever_wavelet_net_ext_s0",
+      "family": "wavelet_net",
+      "regime": "per_subject",
+      "name": "lever_wavelet_net_ext_s0"
+    },
+    {
+      "run_id": "lever_wavelet_net_ext_s1",
+      "run_dir": "experiments/lever_rf/lever_wavelet_net_ext_s1",
+      "family": "wavelet_net",
+      "regime": "per_subject",
+      "name": "lever_wavelet_net_ext_s1"
+    },
+    {
+      "run_id": "lever_wavelet_net_ext_s2",
+      "run_dir": "experiments/lever_rf/lever_wavelet_net_ext_s2",
+      "family": "wavelet_net",
+      "regime": "per_subject",
+      "name": "lever_wavelet_net_ext_s2"
+    }
+  ]
+}
