@@ -1,0 +1,131 @@
+{
+  "factor": "loss",
+  "experiments": [
+    {
+      "run_id": "lever_resunet_sa_equal_s0",
+      "run_dir": "experiments/lever_loss/lever_resunet_sa_equal_s0",
+      "family": "resunet_sa",
+      "regime": "per_subject",
+      "name": "lever_resunet_sa_equal_s0"
+    },
+    {
+      "run_id": "lever_resunet_sa_equal_s1",
+      "run_dir": "experiments/lever_loss/lever_resunet_sa_equal_s1",
+      "family": "resunet_sa",
+      "regime": "per_subject",
+      "name": "lever_resunet_sa_equal_s1"
+    },
+    {
+      "run_id": "lever_resunet_sa_equal_s2",
+      "run_dir": "experiments/lever_loss/lever_resunet_sa_equal_s2",
+      "family": "resunet_sa",
+      "regime": "per_subject",
+      "name": "lever_resunet_sa_equal_s2"
+    },
+    {
+      "run_id": "lever_resunet_sa_sbp2x_s0",
+      "run_dir": "experiments/lever_loss/lever_resunet_sa_sbp2x_s0",
+      "family": "resunet_sa",
+      "regime": "per_subject",
+      "name": "lever_resunet_sa_sbp2x_s0"
+    },
+    {
+      "run_id": "lever_resunet_sa_sbp2x_s1",
+      "run_dir": "experiments/lever_loss/lever_resunet_sa_sbp2x_s1",
+      "family": "resunet_sa",
+      "regime": "per_subject",
+      "name": "lever_resunet_sa_sbp2x_s1"
+    },
+    {
+      "run_id": "lever_resunet_sa_sbp2x_s2",
+      "run_dir": "experiments/lever_loss/lever_resunet_sa_sbp2x_s2",
+      "family": "resunet_sa",
+      "regime": "per_subject",
+      "name": "lever_resunet_sa_sbp2x_s2"
+    },
+    {
+      "run_id": "lever_resunet_sa_sbp3x_s0",
+      "run_dir": "experiments/lever_loss/lever_resunet_sa_sbp3x_s0",
+      "family": "resunet_sa",
+      "regime": "per_subject",
+      "name": "lever_resunet_sa_sbp3x_s0"
+    },
+    {
+      "run_id": "lever_resunet_sa_sbp3x_s1",
+      "run_dir": "experiments/lever_loss/lever_resunet_sa_sbp3x_s1",
+      "family": "resunet_sa",
+      "regime": "per_subject",
+      "name": "lever_resunet_sa_sbp3x_s1"
+    },
+    {
+      "run_id": "lever_resunet_sa_sbp3x_s2",
+      "run_dir": "experiments/lever_loss/lever_resunet_sa_sbp3x_s2",
+      "family": "resunet_sa",
+      "regime": "per_subject",
+      "name": "lever_resunet_sa_sbp3x_s2"
+    },
+    {
+      "run_id": "lever_wavelet_net_equal_s0",
+      "run_dir": "experiments/lever_loss/lever_wavelet_net_equal_s0",
+      "family": "wavelet_net",
+      "regime": "per_subject",
+      "name": "lever_wavelet_net_equal_s0"
+    },
+    {
+      "run_id": "lever_wavelet_net_equal_s1",
+      "run_dir": "experiments/lever_loss/lever_wavelet_net_equal_s1",
+      "family": "wavelet_net",
+      "regime": "per_subject",
+      "name": "lever_wavelet_net_equal_s1"
+    },
+    {
+      "run_id": "lever_wavelet_net_equal_s2",
+      "run_dir": "experiments/lever_loss/lever_wavelet_net_equal_s2",
+      "family": "wavelet_net",
+      "regime": "per_subject",
+      "name": "lever_wavelet_net_equal_s2"
+    },
+    {
+      "run_id": "lever_wavelet_net_sbp2x_s0",
+      "run_dir": "experiments/lever_loss/lever_wavelet_net_sbp2x_s0",
+      "family": "wavelet_net",
+      "regime": "per_subject",
+      "name": "lever_wavelet_net_sbp2x_s0"
+    },
+    {
+      "run_id": "lever_wavelet_net_sbp2x_s1",
+      "run_dir": "experiments/lever_loss/lever_wavelet_net_sbp2x_s1",
+      "family": "wavelet_net",
+      "regime": "per_subject",
+      "name": "lever_wavelet_net_sbp2x_s1"
+    },
+    {
+      "run_id": "lever_wavelet_net_sbp2x_s2",
+      "run_dir": "experiments/lever_loss/lever_wavelet_net_sbp2x_s2",
+      "family": "wavelet_net",
+      "regime": "per_subject",
+      "name": "lever_wavelet_net_sbp2x_s2"
+    },
+    {
+      "run_id": "lever_wavelet_net_sbp3x_s0",
+      "run_dir": "experiments/lever_loss/lever_wavelet_net_sbp3x_s0",
+      "family": "wavelet_net",
+      "regime": "per_subject",
+      "name": "lever_wavelet_net_sbp3x_s0"
+    },
+    {
+      "run_id": "lever_wavelet_net_sbp3x_s1",
+      "run_dir": "experiments/lever_loss/lever_wavelet_net_sbp3x_s1",
+      "family": "wavelet_net",
+      "regime": "per_subject",
+      "name": "lever_wavelet_net_sbp3x_s1"
+    },
+    {
+      "run_id": "lever_wavelet_net_sbp3x_s2",
+      "run_dir": "experiments/lever_loss/lever_wavelet_net_sbp3x_s2",
+      "family": "wavelet_net",
+      "regime": "per_subject",
+      "name": "lever_wavelet_net_sbp3x_s2"
+    }
+  ]
+}
