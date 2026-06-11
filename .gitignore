@@ -6,6 +6,8 @@ data/
 *.npz
 *.parquet
 
+docs/methodology-and-findings.INTERNAL.html
+
 # Large model artifacts / checkpoints
 *.pt
 *.pth
